@@ -1,0 +1,206 @@
+pipeline {
+    agent none
+
+    environment {
+        GIT_CREDENTIALS_ID = 'github-token-user'
+    }
+
+    stages {
+        stage('Get Code') {
+            agent { label 'built-in' }
+            steps {
+                cleanWs()
+                checkout scm
+                stash includes: '**', name: 'source-code'
+                sh '''
+                whoami
+                echo "Ejecutando en nodo: $(hostname)"
+                '''
+                echo "GIT_BRANCH=${env.GIT_BRANCH}"
+            }
+        }
+
+        stage('Static Test') {
+            when { expression { env.GIT_BRANCH ==~ /(develop|origin\/develop)/ } }
+            agent { label 'static-agent' }
+            steps {
+                cleanWs()
+                unstash 'source-code'
+                
+                sh '''
+                whoami
+                echo "Ejecutando en nodo: $(hostname)"
+                '''
+
+                sh '''
+                flake8 src --exit-zero --format=pylint > flake8.out
+                bandit -r src -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}" || true
+                '''
+                
+                recordIssues tools: [
+                    flake8(pattern: 'flake8.out'), 
+                    pyLint(name: 'Bandit', pattern: 'bandit.out')
+                ]
+            }
+        }
+
+        stage('Deploy Staging') {
+            when { expression { env.GIT_BRANCH ==~ /(develop|origin\/develop)/ } }
+            agent { label 'built-in' }
+            steps {
+                cleanWs()
+                unstash 'source-code'
+                script {
+                    sh '''
+                    whoami
+                    echo "Ejecutando en nodo: $(hostname)"
+                    '''
+                    
+                    sh '''
+                        sam build
+                        set +e
+                        sam deploy --config-env staging --no-confirm-changeset > deploy.log 2>&1
+                        EXIT_CODE=$?
+                        cat deploy.log
+                        if [ $EXIT_CODE -ne 0 ]; then
+                            if grep -q "No changes to deploy" deploy.log; then
+                                echo "No hay cambios en la infraestructura, continuando..."
+                                exit 0
+                            else
+                                echo "Error en el despliegue"
+                                exit $EXIT_CODE
+                            fi
+                        fi
+                        set -e
+                    '''
+                    
+                    def apiUrl = sh(script: "aws cloudformation describe-stacks --stack-name todo-list-aws-staging --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --output text", returnStdout: true).trim()
+                    writeFile file: 'api_url.txt', text: apiUrl
+                    
+                    stash includes: 'api_url.txt', name: 'staging-url-file'
+                }
+            }
+        }
+
+        stage('Rest Test Staging') {
+            when { expression { env.GIT_BRANCH ==~ /(develop|origin\/develop)/ } }
+            agent { label 'test-agent' }
+            steps {
+                cleanWs()
+                unstash 'source-code'
+                unstash 'staging-url-file'
+                
+                sh '''
+                whoami
+                echo "Ejecutando en nodo: $(hostname)"
+                '''
+                
+                script {
+                    def apiUrl = readFile('api_url.txt').trim()
+
+                    withEnv(["BASE_URL=${apiUrl}"]) {
+                        sh 'pytest --junitxml=result-rest-staging.xml test/integration/todoApiTest.py'
+                    }
+                }
+            }
+            post { always { junit 'result-rest-staging.xml' } }
+        }
+
+        stage('Promote') {
+            when { expression { env.GIT_BRANCH ==~ /(develop|origin\/develop)/ } }
+            agent { label 'built-in' }
+            steps {
+                script {
+                    cleanWs()
+                    checkout scm
+                    sh '''
+                    whoami
+                    echo "Ejecutando en nodo: $(hostname)"
+                    '''
+                    
+                    def repoUrl = sh(returnStdout: true, script: 'git config remote.origin.url').trim()
+                    withCredentials([usernamePassword(credentialsId: env.GIT_CREDENTIALS_ID, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
+                        sh """
+                        git fetch origin
+                        git checkout master
+                        git pull origin master
+                        
+                        git checkout develop
+                        git pull origin develop
+                        
+                        git checkout master
+                        git merge develop
+                        git push https://\${GIT_USERNAME}:\${GIT_PASSWORD}@${repoUrl.replace("https://", "")} master
+                        git checkout develop
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Production') {
+            when { expression { env.GIT_BRANCH ==~ /(master|origin\/master)/ } }
+            agent { label 'built-in' }
+            steps {
+                script {
+                    cleanWs()
+                    unstash 'source-code'
+                    sh '''
+                    whoami
+                    echo "Ejecutando en nodo: $(hostname)"
+                    '''
+                    sh '''
+                        sam build
+                        set +e
+                        sam deploy --config-env production --no-confirm-changeset > deploy.log 2>&1
+                        EXIT_CODE=$?
+                        cat deploy.log
+                        if [ $EXIT_CODE -ne 0 ]; then
+                            if grep -q "No changes to deploy" deploy.log; then
+                                echo "No hay cambios en la infraestructura, continuando..."
+                                exit 0
+                            else
+                                echo "Error en el despliegue"
+                                exit $EXIT_CODE
+                            fi
+                        fi
+                        set -e
+                    '''
+                    
+                    def apiUrl = sh(script: "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --output text", returnStdout: true).trim()
+                    writeFile file: 'api_url_prod.txt', text: apiUrl
+                    
+                    stash includes: 'api_url_prod.txt', name: 'prod-url-file'
+                }
+            }
+        }
+
+        stage('Rest Test Prod') {
+            when { expression { env.GIT_BRANCH ==~ /(master|origin\/master)/ } }
+            agent { label 'test-agent' }
+            steps {
+                cleanWs()
+                unstash 'source-code'
+                unstash 'prod-url-file'
+                
+                sh '''
+                whoami
+                echo "Ejecutando en nodo: $(hostname)"
+                '''
+                
+                script {
+                    def apiUrl = readFile('api_url_prod.txt').trim()
+
+                    withEnv(["BASE_URL=${apiUrl}"]) {
+                        sh 'pytest --junitxml=result-rest-prod.xml -m "readonly" test/integration/todoApiTest.py'
+                    }
+                }
+            }
+            post { 
+                always { 
+                    junit 'result-rest-prod.xml'
+                } 
+            }
+        }
+    }
+}
