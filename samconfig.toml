@@ -14,7 +14,7 @@ image_repositories = []
 [staging.deploy]
 [staging.deploy.parameters]
 stack_name = "todo-list-aws-staging"
-s3_bucket = "aws-sam-cli-managed-staging-samclisourcebucket-brudpq1ncz4k"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-brudpq1ncz4k"
 s3_prefix = "todo-list-aws"
 region = "us-east-1"
 capabilities = "CAPABILITY_IAM"
@@ -25,7 +25,7 @@ image_repositories = []
 [production.deploy]
 [production.deploy.parameters]
 stack_name = "todo-list-aws-production"
-s3_bucket = "aws-sam-cli-managed-production-samclisourcebucket-brudpq1ncz4k"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-brudpq1ncz4k"
 s3_prefix = "todo-list-aws"
 region = "us-east-1"
 capabilities = "CAPABILITY_IAM"
