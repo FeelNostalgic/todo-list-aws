@@ -112,10 +112,12 @@ pipeline {
             steps {
                 script {
                     cleanWs()
+                    unstash 'source-code'
                     sh '''
                     whoami
                     echo "Ejecutando en nodo: $(hostname)"
                     '''
+                    
                     def repoUrl = sh(returnStdout: true, script: 'git config remote.origin.url').trim()
                     withCredentials([usernamePassword(credentialsId: env.GIT_CREDENTIALS_ID, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
                         sh """
@@ -142,6 +144,7 @@ pipeline {
             steps {
                 script {
                     cleanWs()
+                    unstash 'source-code'
                     sh '''
                     whoami
                     echo "Ejecutando en nodo: $(hostname)"
