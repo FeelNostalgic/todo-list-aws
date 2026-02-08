@@ -64,10 +64,18 @@ pipeline {
             steps {
                 script {
                     def repoUrl = sh(returnStdout: true, script: 'git config remote.origin.url').trim()
+                    echo "URL del repositorio: ${repoUrl}"
+                    echo "Credenciales: ${env.GIT_CREDENTIALS_ID}"
                     withCredentials([usernamePassword(credentialsId: env.GIT_CREDENTIALS_ID, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
                         sh """
+                        git fetch origin
                         git checkout master
                         git pull origin master
+                        
+                        git checkout develop
+                        git pull origin develop
+                        
+                        git checkout master
                         git merge develop
                         git push https://\${GIT_USERNAME}:\${GIT_PASSWORD}@${repoUrl.replace("https://", "")} master
                         git checkout develop
