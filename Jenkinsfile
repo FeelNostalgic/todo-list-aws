@@ -62,15 +62,16 @@ pipeline {
 
         stage('Promote') {
             steps {
-                def repoUrl = sh(returnStdout: true, script: 'git config remote.origin.url').trim()
-                script {                    
+                script {
+                    def repoUrl = sh(returnStdout: true, script: 'git config remote.origin.url').trim()
                     withCredentials([usernamePassword(credentialsId: env.GIT_CREDENTIALS_ID, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                        sh '''
+                        sh """
                         git checkout master
+                        git pull origin master
                         git merge develop
-                        git push https://${GIT_USERNAME}:${GIT_PASSWORD}@${repoUrl.replace("https://", "")} master
+                        git push https://\${GIT_USERNAME}:\${GIT_PASSWORD}@${repoUrl.replace("https://", "")} master
                         git checkout develop
-                        '''
+                        """
                     }
                 }
             }
