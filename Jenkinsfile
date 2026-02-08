@@ -21,7 +21,7 @@ pipeline {
                 '''
 
                 sh '''
-                bandit --exit-zero -r src -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}"
+                bandit -r src -f custom -o bandit.out --msg-template "{abspath}:{line}: [{test_id}] {msg}" || true
                 '''
 
                 recordIssues tools: [
