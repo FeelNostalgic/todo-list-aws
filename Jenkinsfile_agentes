@@ -112,7 +112,7 @@ pipeline {
             steps {
                 script {
                     cleanWs()
-                    unstash 'source-code'
+                    checkout scm
                     sh '''
                     whoami
                     echo "Ejecutando en nodo: $(hostname)"
