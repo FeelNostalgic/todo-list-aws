@@ -47,6 +47,7 @@ pipeline {
             when { branch 'develop' }
             agent { label 'built-in' }
             steps {
+                cleanWs()
                 unstash 'source-code'
                 script {
                     sh '''
@@ -103,12 +104,13 @@ pipeline {
             }
             post { always { junit 'result-rest-staging.xml' } }
         }
-=
+
         stage('Promote') {
             when { branch 'develop' }
             agent { label 'built-in' }
             steps {
                 script {
+                    cleanWs()
                     sh '''
                     echo whoami
                     echo "Ejecutando en nodo: $(hostname)"
@@ -138,6 +140,7 @@ pipeline {
             agent { label 'built-in' }
             steps {
                 script {
+                    cleanWs()
                     sh '''
                     echo whoami
                     echo "Ejecutando en nodo: $(hostname)"
@@ -189,7 +192,11 @@ pipeline {
                     }
                 }
             }
-            post { always { junit 'result-rest-prod.xml' } }
+            post { 
+                always { 
+                    junit 'result-rest-prod.xml'
+                } 
+            }
         }
     }
 }
