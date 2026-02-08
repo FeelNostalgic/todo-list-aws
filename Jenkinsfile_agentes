@@ -74,7 +74,7 @@ pipeline {
                         set -e
                     '''
                     
-                    def apiUrl = sh(script: "aws cloudformation describe-stacks --stack-name todo-list-aws-staging --query 'Stacks[0].Outputs[?OutputKey==`ToDoApi`].OutputValue' --output text", returnStdout: true).trim()
+                    def apiUrl = sh(script: "aws cloudformation describe-stacks --stack-name todo-list-aws-staging --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --output text", returnStdout: true).trim()
                     writeFile file: 'api_url.txt', text: apiUrl
                     
                     stash includes: 'api_url.txt', name: 'staging-url-file'
@@ -164,7 +164,7 @@ pipeline {
                         set -e
                     '''
                     
-                    def apiUrl = sh(script: "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`ToDoApi`].OutputValue' --output text", returnStdout: true).trim()
+                    def apiUrl = sh(script: "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --output text", returnStdout: true).trim()
                     writeFile file: 'api_url_prod.txt', text: apiUrl
                     
                     stash includes: 'api_url_prod.txt', name: 'prod-url-file'
