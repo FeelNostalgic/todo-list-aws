@@ -17,12 +17,11 @@ pipeline {
                 echo "Ejecutando en nodo: $(hostname)"
                 '''
                 echo "GIT_BRANCH=${env.GIT_BRANCH}"
-                echo "BRANCH_NAME=${env.BRANCH_NAME}"
             }
         }
 
         stage('Static Test') {
-            when { expression { env.BRANCH_NAME ==~ /(develop|origin\/develop)/ } }
+            when { expression { env.GIT_BRANCH ==~ /(develop|origin\/develop)/ } }
             agent { label 'static-agent' }
             steps {
                 cleanWs()
@@ -46,7 +45,7 @@ pipeline {
         }
 
         stage('Deploy Staging') {
-            when { expression { env.BRANCH_NAME ==~ /(develop|origin\/develop)/ } }
+            when { expression { env.GIT_BRANCH ==~ /(develop|origin\/develop)/ } }
             agent { label 'built-in' }
             steps {
                 cleanWs()
@@ -84,7 +83,7 @@ pipeline {
         }
 
         stage('Rest Test Staging') {
-            when { expression { env.BRANCH_NAME ==~ /(develop|origin\/develop)/ } }
+            when { expression { env.GIT_BRANCH ==~ /(develop|origin\/develop)/ } }
             agent { label 'test-agent' }
             steps {
                 cleanWs()
@@ -108,7 +107,7 @@ pipeline {
         }
 
         stage('Promote') {
-            when { expression { env.BRANCH_NAME ==~ /(develop|origin\/develop)/ } }
+            when { expression { env.GIT_BRANCH ==~ /(develop|origin\/develop)/ } }
             agent { label 'built-in' }
             steps {
                 script {
@@ -138,7 +137,7 @@ pipeline {
         }
 
         stage('Deploy Production') {
-            when { expression { env.BRANCH_NAME ==~ /(master|origin\/master)/ } }
+            when { expression { env.GIT_BRANCH ==~ /(master|origin\/master)/ } }
             agent { label 'built-in' }
             steps {
                 script {
@@ -174,7 +173,7 @@ pipeline {
         }
 
         stage('Rest Test Prod') {
-            when { expression { env.BRANCH_NAME ==~ /(master|origin\/master)/ } }
+            when { expression { env.GIT_BRANCH ==~ /(master|origin\/master)/ } }
             agent { label 'test-agent' }
             steps {
                 cleanWs()
