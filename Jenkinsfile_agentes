@@ -15,8 +15,8 @@ pipeline {
                 sh '''
                 whoami
                 echo "Ejecutando en nodo: $(hostname)"
-                echo "GIT_BRANCH=${env.GIT_BRANCH}"
                 '''
+                echo "GIT_BRANCH=${env.GIT_BRANCH}"
             }
         }
 
