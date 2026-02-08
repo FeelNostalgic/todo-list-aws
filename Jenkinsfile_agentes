@@ -14,13 +14,14 @@ pipeline {
                 stash includes: '**', name: 'source-code'
                 sh '''
                 whoami
-                echo "Ejecutando en nodo: $(hostname) | workspace: ${WORKSPACE}"
+                echo "Ejecutando en nodo: $(hostname)"
+                echo "GIT_BRANCH=${env.GIT_BRANCH}"
                 '''
             }
         }
 
         stage('Static Test') {
-            when { anyOf { branch 'develop'; branch '*/develop' } }
+            when { anyOf { branch 'develop'; branch 'origin/develop'; branch 'refs/remotes/origin/develop' } }
             agent { label 'static-agent' }
             steps {
                 cleanWs()
@@ -28,7 +29,7 @@ pipeline {
                 
                 sh '''
                 whoami
-                echo "Ejecutando en nodo: $(hostname) | workspace: ${WORKSPACE}"
+                echo "Ejecutando en nodo: $(hostname)"
                 '''
 
                 sh '''
@@ -44,7 +45,7 @@ pipeline {
         }
 
         stage('Deploy Staging') {
-            when { anyOf { branch 'develop'; branch '*/develop' } }
+            when { anyOf { branch 'develop'; branch 'origin/develop'; branch 'refs/remotes/origin/develop' } }
             agent { label 'built-in' }
             steps {
                 cleanWs()
@@ -82,7 +83,7 @@ pipeline {
         }
 
         stage('Rest Test Staging') {
-            when { anyOf { branch 'develop'; branch '*/develop' } }
+            when { anyOf { branch 'develop'; branch 'origin/develop'; branch 'refs/remotes/origin/develop' } }
             agent { label 'test-agent' }
             steps {
                 cleanWs()
@@ -106,7 +107,7 @@ pipeline {
         }
 
         stage('Promote') {
-            when { anyOf { branch 'develop'; branch '*/develop' } }
+            when { anyOf { branch 'develop'; branch 'origin/develop'; branch 'refs/remotes/origin/develop' } }
             agent { label 'built-in' }
             steps {
                 script {
@@ -136,7 +137,7 @@ pipeline {
         }
 
         stage('Deploy Production') {
-            when { anyOf { branch 'master'; branch '*/master' } }
+            when { anyOf { branch 'master'; branch 'origin/master'; branch 'refs/remotes/origin/master' } }
             agent { label 'built-in' }
             steps {
                 script {
@@ -172,7 +173,7 @@ pipeline {
         }
 
         stage('Rest Test Prod') {
-            when { anyOf { branch 'master'; branch '*/master' } }
+            when { anyOf { branch 'master'; branch 'origin/master'; branch 'refs/remotes/origin/master' } }
             agent { label 'test-agent' }
             steps {
                 cleanWs()
