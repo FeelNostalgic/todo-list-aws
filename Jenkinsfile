@@ -36,7 +36,20 @@ pipeline {
                 script {
                     sh '''
                         sam build
-                        sam deploy --config-env staging --no-confirm-changeset
+                        set +e
+                        sam deploy --config-env staging --no-confirm-changeset > deploy.log 2>&1
+                        EXIT_CODE=$?
+                        cat deploy.log
+                        if [ $EXIT_CODE -ne 0 ]; then
+                            if grep -q "No changes to deploy" deploy.log; then
+                                echo "No hay cambios en la infraestructura, continuando..."
+                                exit 0
+                            else
+                                echo "Error en el despliegue"
+                                exit $EXIT_CODE
+                            fi
+                        fi
+                        set -e
                     '''
                 }
             }
