@@ -14,15 +14,13 @@ pipeline {
                 stash includes: '**', name: 'source-code'
                 sh '''
                 whoami
-                echo "Ejecutando en nodo: $(hostname)"
-                hostname
-                echo ${WORKSPACE}
+                echo "Ejecutando en nodo: $(hostname) | workspace: ${WORKSPACE}"
                 '''
             }
         }
 
         stage('Static Test') {
-            when { branch 'develop' }
+            when { anyOf { branch 'develop'; branch '*/develop' } }
             agent { label 'static-agent' }
             steps {
                 cleanWs()
@@ -30,9 +28,7 @@ pipeline {
                 
                 sh '''
                 whoami
-                echo "Ejecutando en nodo: $(hostname)"
-                hostname
-                echo ${WORKSPACE}
+                echo "Ejecutando en nodo: $(hostname) | workspace: ${WORKSPACE}"
                 '''
 
                 sh '''
@@ -48,7 +44,7 @@ pipeline {
         }
 
         stage('Deploy Staging') {
-            when { branch 'develop' }
+            when { anyOf { branch 'develop'; branch '*/develop' } }
             agent { label 'built-in' }
             steps {
                 cleanWs()
@@ -86,7 +82,7 @@ pipeline {
         }
 
         stage('Rest Test Staging') {
-            when { branch 'develop' }
+            when { anyOf { branch 'develop'; branch '*/develop' } }
             agent { label 'test-agent' }
             steps {
                 cleanWs()
@@ -110,7 +106,7 @@ pipeline {
         }
 
         stage('Promote') {
-            when { branch 'develop' }
+            when { anyOf { branch 'develop'; branch '*/develop' } }
             agent { label 'built-in' }
             steps {
                 script {
@@ -140,7 +136,7 @@ pipeline {
         }
 
         stage('Deploy Production') {
-            when { branch 'master' }
+            when { anyOf { branch 'master'; branch '*/master' } }
             agent { label 'built-in' }
             steps {
                 script {
@@ -176,7 +172,7 @@ pipeline {
         }
 
         stage('Rest Test Prod') {
-            when { branch 'master' }
+            when { anyOf { branch 'master'; branch '*/master' } }
             agent { label 'test-agent' }
             steps {
                 cleanWs()
