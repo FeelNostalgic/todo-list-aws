@@ -13,8 +13,10 @@ pipeline {
                 checkout scm
                 stash includes: '**', name: 'source-code'
                 sh '''
-                echo whoami
+                whoami
                 echo "Ejecutando en nodo: $(hostname)"
+                hostname
+                echo ${WORKSPACE}
                 '''
             }
         }
@@ -27,8 +29,10 @@ pipeline {
                 unstash 'source-code'
                 
                 sh '''
-                echo whoami
+                whoami
                 echo "Ejecutando en nodo: $(hostname)"
+                hostname
+                echo ${WORKSPACE}
                 '''
 
                 sh '''
@@ -51,7 +55,7 @@ pipeline {
                 unstash 'source-code'
                 script {
                     sh '''
-                    echo whoami
+                    whoami
                     echo "Ejecutando en nodo: $(hostname)"
                     '''
                     
@@ -90,7 +94,7 @@ pipeline {
                 unstash 'staging-url-file'
                 
                 sh '''
-                echo whoami
+                whoami
                 echo "Ejecutando en nodo: $(hostname)"
                 '''
                 
@@ -112,7 +116,7 @@ pipeline {
                 script {
                     cleanWs()
                     sh '''
-                    echo whoami
+                    whoami
                     echo "Ejecutando en nodo: $(hostname)"
                     '''
                     def repoUrl = sh(returnStdout: true, script: 'git config remote.origin.url').trim()
@@ -142,7 +146,7 @@ pipeline {
                 script {
                     cleanWs()
                     sh '''
-                    echo whoami
+                    whoami
                     echo "Ejecutando en nodo: $(hostname)"
                     '''
                     sh '''
@@ -180,7 +184,7 @@ pipeline {
                 unstash 'prod-url-file'
                 
                 sh '''
-                echo whoami
+                whoami
                 echo "Ejecutando en nodo: $(hostname)"
                 '''
                 
