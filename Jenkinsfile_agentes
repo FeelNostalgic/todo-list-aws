@@ -17,11 +17,12 @@ pipeline {
                 echo "Ejecutando en nodo: $(hostname)"
                 '''
                 echo "GIT_BRANCH=${env.GIT_BRANCH}"
+                echo "BRANCH_NAME=${env.BRANCH_NAME}"
             }
         }
 
         stage('Static Test') {
-            when { anyOf { branch 'develop'; branch 'origin/develop'; branch 'refs/remotes/origin/develop' } }
+            when { expression { env.BRANCH_NAME ==~ /(develop|origin\/develop)/ } }
             agent { label 'static-agent' }
             steps {
                 cleanWs()
@@ -45,7 +46,7 @@ pipeline {
         }
 
         stage('Deploy Staging') {
-            when { anyOf { branch 'develop'; branch 'origin/develop'; branch 'refs/remotes/origin/develop' } }
+            when { expression { env.BRANCH_NAME ==~ /(develop|origin\/develop)/ } }
             agent { label 'built-in' }
             steps {
                 cleanWs()
@@ -83,7 +84,7 @@ pipeline {
         }
 
         stage('Rest Test Staging') {
-            when { anyOf { branch 'develop'; branch 'origin/develop'; branch 'refs/remotes/origin/develop' } }
+            when { expression { env.BRANCH_NAME ==~ /(develop|origin\/develop)/ } }
             agent { label 'test-agent' }
             steps {
                 cleanWs()
@@ -107,7 +108,7 @@ pipeline {
         }
 
         stage('Promote') {
-            when { anyOf { branch 'develop'; branch 'origin/develop'; branch 'refs/remotes/origin/develop' } }
+            when { expression { env.BRANCH_NAME ==~ /(develop|origin\/develop)/ } }
             agent { label 'built-in' }
             steps {
                 script {
@@ -137,7 +138,7 @@ pipeline {
         }
 
         stage('Deploy Production') {
-            when { anyOf { branch 'master'; branch 'origin/master'; branch 'refs/remotes/origin/master' } }
+            when { expression { env.BRANCH_NAME ==~ /(master|origin\/master)/ } }
             agent { label 'built-in' }
             steps {
                 script {
@@ -173,7 +174,7 @@ pipeline {
         }
 
         stage('Rest Test Prod') {
-            when { anyOf { branch 'master'; branch 'origin/master'; branch 'refs/remotes/origin/master' } }
+            when { expression { env.BRANCH_NAME ==~ /(master|origin\/master)/ } }
             agent { label 'test-agent' }
             steps {
                 cleanWs()
