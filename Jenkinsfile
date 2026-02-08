@@ -77,8 +77,6 @@ pipeline {
             steps {
                 script {
                     def repoUrl = sh(returnStdout: true, script: 'git config remote.origin.url').trim()
-                    echo "URL del repositorio: ${repoUrl}"
-                    echo "Credenciales: ${env.GIT_CREDENTIALS_ID}"
                     withCredentials([usernamePassword(credentialsId: env.GIT_CREDENTIALS_ID, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
                         sh """
                         git fetch origin
