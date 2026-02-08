@@ -14,4 +14,5 @@ def create(event, context):
         "statusCode": 200,
         "body": json.dumps(item)
     }
+    
     return response
