@@ -44,7 +44,7 @@ pipeline {
                     echo "API desplegada en: ${apiUrl}"
 
                     withEnv(["BASE_URL=${apiUrl}"]) {
-                        sh 'pytest --junitxml=result-rest.xml test/integration/todoApiTest.py --markers "readonly"'
+                        sh 'pytest --junitxml=result-rest.xml -m "readonly" test/integration/todoApiTest.py'
                     }
                 }
             }
