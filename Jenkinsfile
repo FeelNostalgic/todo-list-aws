@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         GIT_CREDENTIALS_ID = 'github-token-user'
-        REPO_URL = 'https://github.com/FeelNostalgic/todo-list-aws.git'
     }
 
     stages {
