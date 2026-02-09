@@ -203,16 +203,16 @@ pipeline {
                 } 
             }
         }
-        post{
-            success {
-                script {
-                    if (env.GIT_BRANCH =~ /(develop|origin\/develop)/) {
-                        echo "Develop completado. Disparando despliegue a Master..."
-                        build job: 'CD-Master', wait: false
-                    }
+    }
+    
+    post{
+        success {
+            script {
+                if (env.GIT_BRANCH =~ /(develop|origin\/develop)/) {
+                    echo "Develop completado. Disparando despliegue a Master..."
+                    build job: 'CD-Master', wait: false
                 }
             }
         }
-
     }
 }
