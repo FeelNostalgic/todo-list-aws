@@ -50,12 +50,11 @@ pipeline {
             steps {
                 cleanWs()
                 unstash 'source-code'
+                sh '''
+                whoami
+                echo "Ejecutando en nodo: $(hostname)"
+                '''
                 script {
-                    sh '''
-                    whoami
-                    echo "Ejecutando en nodo: $(hostname)"
-                    '''
-                    
                     sh '''
                         sam build
                         set +e
@@ -74,7 +73,7 @@ pipeline {
                         set -e
                     '''
                     
-                    def apiUrl = sh(script: "aws cloudformation describe-stacks --stack-name todo-list-aws-staging --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --output text", returnStdout: true).trim()
+                    def apiUrl = sh(script: "aws cloudformation describe-stacks --stack-name todo-list-aws-staging --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text", returnStdout: true).trim()
                     writeFile file: 'api_url.txt', text: apiUrl
                     
                     stash includes: 'api_url.txt', name: 'staging-url-file'
@@ -110,14 +109,14 @@ pipeline {
             when { expression { env.GIT_BRANCH ==~ /(develop|origin\/develop)/ } }
             agent { label 'built-in' }
             steps {
-                script {
-                    cleanWs()
-                    checkout scm
-                    sh '''
+                cleanWs()
+                checkout scm
+                sh '''
                     whoami
                     echo "Ejecutando en nodo: $(hostname)"
                     '''
-                    
+                
+                script {
                     def repoUrl = sh(returnStdout: true, script: 'git config remote.origin.url').trim()
                     withCredentials([usernamePassword(credentialsId: env.GIT_CREDENTIALS_ID, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
                         sh """
@@ -142,13 +141,13 @@ pipeline {
             when { expression { env.GIT_BRANCH ==~ /(master|origin\/master)/ } }
             agent { label 'built-in' }
             steps {
+                cleanWs()
+                unstash 'source-code'
+                sh '''
+                whoami
+                echo "Ejecutando en nodo: $(hostname)"
+                '''
                 script {
-                    cleanWs()
-                    unstash 'source-code'
-                    sh '''
-                    whoami
-                    echo "Ejecutando en nodo: $(hostname)"
-                    '''
                     sh '''
                         sam build
                         set +e
@@ -167,10 +166,10 @@ pipeline {
                         set -e
                     '''
                     
-                    def apiUrl = sh(script: "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --output text", returnStdout: true).trim()
-                    writeFile file: 'api_url_prod.txt', text: apiUrl
+                    def apiUrl = sh(script: "aws cloudformation describe-stacks --stack-name todo-list-aws-production --query 'Stacks[0].Outputs[?OutputKey==`BaseUrlApi`].OutputValue' --region us-east-1 --output text", returnStdout: true).trim()
+                    writeFile file: 'api_url_production.txt', text: apiUrl
                     
-                    stash includes: 'api_url_prod.txt', name: 'prod-url-file'
+                    stash includes: 'api_url_production.txt', name: 'production-url-file'
                 }
             }
         }
@@ -181,18 +180,18 @@ pipeline {
             steps {
                 cleanWs()
                 unstash 'source-code'
-                unstash 'prod-url-file'
-                
+                unstash 'production-url-file'
                 sh '''
                 whoami
                 echo "Ejecutando en nodo: $(hostname)"
                 '''
                 
                 script {
-                    def apiUrl = readFile('api_url_prod.txt').trim()
+                    def apiUrl = readFile('api_url_production.txt').trim()
+                    echo "API URL: ${apiUrl}"
 
                     withEnv(["BASE_URL=${apiUrl}"]) {
-                        sh 'pytest --junitxml=result-rest-prod.xml -m "readonly" test/integration/todoApiTest.py'
+                        sh 'pytest --junitxml=result-rest.xml -m "readonly" test/integration/todoApiTest.py'
                     }
                 }
             }
@@ -200,6 +199,14 @@ pipeline {
                 always { 
                     junit 'result-rest-prod.xml'
                 } 
+                success {
+                    script {
+                        if (env.GIT_BRANCH =~ /(develop|origin\/develop)/) {
+                            echo "Develop completado. Disparando despliegue a Master..."
+                            build job: 'CD-Master', wait: false
+                        }
+                    }
+                }
             }
         }
     }
