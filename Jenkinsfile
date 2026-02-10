@@ -86,7 +86,7 @@ pipeline {
                         git checkout -B develop origin/develop
                         
                         git checkout master
-                        git merge develop
+                        git merge develop -X ours
                         git push https://\${GIT_USERNAME}:\${GIT_PASSWORD}@${repoUrl.replace("https://", "")} master
                         """
                     }
