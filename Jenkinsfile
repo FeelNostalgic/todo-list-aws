@@ -81,7 +81,7 @@ pipeline {
                     def repoUrl = sh(returnStdout: true, script: 'git config remote.origin.url').trim()
                     withCredentials([usernamePassword(credentialsId: env.GIT_CREDENTIALS_ID, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
                         sh """
-                        git fetch origin
+                        git fetch origin +refs/heads/master:refs/remotes/origin/master +refs/heads/develop:refs/remotes/origin/develop
                         git checkout -B master origin/master
                         git checkout -B develop origin/develop
                         
