@@ -82,16 +82,12 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: env.GIT_CREDENTIALS_ID, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
                         sh """
                         git fetch origin
-                        git checkout master
-                        git pull origin master
-                        
-                        git checkout develop
-                        git pull origin develop
+                        git checkout -B master origin/master
+                        git checkout -B develop origin/develop
                         
                         git checkout master
                         git merge develop
                         git push https://\${GIT_USERNAME}:\${GIT_PASSWORD}@${repoUrl.replace("https://", "")} master
-                        git checkout develop
                         """
                     }
                 }
