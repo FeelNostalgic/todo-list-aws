@@ -10,6 +10,9 @@ pipeline {
             steps {
                 cleanWs()
                 checkout scm
+                script{
+                    sh 'curl -o samconfig.toml https://raw.githubusercontent.com/FeelNostalgic/todo-list-aws-config/staging/samconfig.toml'
+                }
             }
         }
 
@@ -36,7 +39,7 @@ pipeline {
                     sh '''
                         sam build
                         set +e
-                        sam deploy --config-env staging --no-confirm-changeset > deploy.log 2>&1
+                        sam deploy --no-confirm-changeset > deploy.log 2>&1
                         EXIT_CODE=$?
                         cat deploy.log
                         if [ $EXIT_CODE -ne 0 ]; then
