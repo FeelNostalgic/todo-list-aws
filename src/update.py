@@ -20,4 +20,5 @@ def update(event, context):
         "body": json.dumps(result,
                            cls=decimalencoder.DecimalEncoder)
     }
+    
     return response
